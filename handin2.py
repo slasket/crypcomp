@@ -1,8 +1,5 @@
 import random
-
 import numpy as np
-import random as rd
-
 import handin1
 
 
@@ -12,7 +9,7 @@ class Dealer:
         self.r = random.randint(0,self.n-1)
         self.s = random.randint(0,self.n-1)
         self.mB = np.random.randint(2, size=(self.n, self.n))
-        self.tt =np.matrix([
+        self.tt = np.matrix([
             [1,0,0,0,0,0,0,0], #o- /0
             [1,1,0,0,0,0,0,0], #o+ /1
             [1,0,1,0,0,0,0,0], #b- /2
@@ -25,8 +22,8 @@ class Dealer:
         #shifting for the mixed truth table
         self.shiftedtt = np.roll(self.tt, -self.r, axis=0)
         self.shiftedtt = np.roll(self.shiftedtt, -self.s, axis=1)
-
-        self.mA = np.bitwise_xor(self.mB, self.tt)
+        print(self.shiftedtt)
+        self.mA = np.bitwise_xor(self.mB, self.shiftedtt)
 
 
 class Alice:
@@ -39,6 +36,8 @@ class Alice:
         return self.u
 
     def receive(self, bobans):
+        print(np.bitwise_xor(self.mA,bobans[2]))
+        print("shifted,shifted after xor")
         return np.bitwise_xor(self.mA[self.u, bobans[0]], bobans[1])
 
 class Bob:
@@ -52,7 +51,7 @@ class Bob:
         self.u = u
 
     def send(self):
-        return [self.v,self.mB[self.u,self.v]]
+        return [self.v, self.mB[self.u, self.v],self.mB]
 
 def oneTimeTable(aliceBloodType, bobBloodType):
     dealer = Dealer()
@@ -62,16 +61,16 @@ def oneTimeTable(aliceBloodType, bobBloodType):
     return alice.receive(bob.send())
 
 def testAllCombinations():
-    for i in range(7):
+    for i in range(8):
         iBin = format(i, "b")
-        for j in range(7):
+        for j in range(8):
             jBin = format(j, "b")
-            if(handin1.bloodCompLookup(i,j) != oneTimeTable(i,j)):
+            oneTimeVal= oneTimeTable(i,j)
+            if(handin1.bloodCompLookup(i,j) != oneTimeVal):
                 print("Blood compatability mismatch with lookup table")
                 print(i,j)
                 print(handin1.bloodCompLookup(i,j))
-                print(oneTimeTable(i,j))
-                return
+                print(oneTimeVal)
 
     return print("All combinations tested")
 
