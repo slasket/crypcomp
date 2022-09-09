@@ -62,7 +62,7 @@ class Bob:
         # field for "receiving" u
         self.u = None
 
-    # function to "receive u from Alice
+    # function to "receive" u from Alice
     def receive(self, u):
         self.u = u
 
@@ -71,6 +71,7 @@ class Bob:
         return [self.v, self.mB[self.u, self.v]]
 
 
+# Function to preform the protocol between Alice and Bob
 def oneTimeTable(aliceBloodType, bobBloodType):
     dealer = Dealer()
     alice = Alice(aliceBloodType, dealer.r, dealer.mA, dealer.n)
@@ -78,25 +79,20 @@ def oneTimeTable(aliceBloodType, bobBloodType):
     bob.receive(alice.send())
     return alice.receive(bob.send())
 
-
+# Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
     for i in range(8):
-        iBin = format(i, "b")
         for j in range(8):
-            jBin = format(j, "b")
             oneTimeVal = oneTimeTable(i, j)
             if (handin1.bloodCompLookup(i, j) != oneTimeVal):
                 print("Blood compatability mismatch with lookup table")
                 print("input:", i, j)
                 print("table:", handin1.bloodCompLookup(i, j),"OTT:", oneTimeVal)
 
-
     return print("All combinations tested")
 
-
+# Main function to call testAllCombinations()
 def main():
-    print(oneTimeTable(0, 0))
-    print(oneTimeTable(6, 1))
     testAllCombinations()
 
 
