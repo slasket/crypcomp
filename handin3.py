@@ -1,22 +1,18 @@
-import random
-import numpy as np
-
-import random
-
+import secrets
 
 class Dealer:
     def __init__(self):
-        self.u = random.randint(0, 1)
-        self.ua = random.randint(0, 1)
+        self.u = secrets.randbits(1)
+        self.ua = secrets.randbits(1)
         self.ub = self.u ^ self.ua
 
-        self.v = random.randint(0, 1)
-        self.va = random.randint(0, 1)
+        self.v = secrets.randbits(1)
+        self.va = secrets.randbits(1)
         self.vb = self.v ^ self.va
 
         # self.w = (self.ua ^ self.ub) & (self.va ^ self.vb)
         self.w = self.u & self.v
-        self.wa = random.randint(0, 1)
+        self.wa = secrets.randbits(1)
         self.wb = self.w ^ self.wa
 
 
@@ -27,7 +23,7 @@ class Alice:
         self.wa = wa
 
         self.x = x
-        self.xa = random.randint(0, 1)
+        self.xa = secrets.randbits(1)
         self.xb = self.x ^ self.xa
 
         self.ya = None
@@ -52,18 +48,19 @@ class Alice:
         return self.e
 
     def calcza(self):
-        za = (self.wa ^ self.e) & (self.xa ^ self.d) & (self.ya ^ self.e) & self.d
+        # za = self.wa ^ (self.e & self.xa) ^ (self.d & self.ya) ^ (self.e & self.d)
+        za = self.wa ^ (self.e & self.xa) ^ (self.d & self.ya) ^ (self.e & self.d)
         return za
 
 
 class Bob:
-    def __init__(self, vb, ub, wb, y):
+    def __init__(self, ub, vb, wb, y):
         self.ub = ub
         self.vb = vb
         self.wb = wb
 
         self.y = y
-        self.ya = random.randint(0, 1)
+        self.ya = secrets.randbits(1)
         self.yb = self.y ^ self.ya
 
         self.xb = None
@@ -90,7 +87,8 @@ class Bob:
         self.e = e
 
     def calczb(self):
-        zb = (self.wb ^ self.e) & (self.xb ^ self.d) & (self.yb ^ self.e) & self.d
+        # zb = self.wb ^ (self.e & self.xb) ^ (self.d & self.yb) ^ (self.e & self.d)
+        zb = self.wb ^ (self.e & self.xb) ^ (self.d & self.yb)
         return zb
 
 
@@ -109,78 +107,22 @@ def protocol(x, y):
 
 
 def main():
-    print("0,0")
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print(protocol(0, 0))
-    print("1,0")
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print(protocol(1, 0))
-    print("0,1")
+    fejl = 0
+    print(protocol(0,0))
     print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print(protocol(0,1))
-    print("1,1")
+    print(protocol(1,0))
     print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
-    print(protocol(1,1))
+
+    for i in range(0,1000):
+        if(protocol(0,0) != 0):
+            fejl = fejl + 1
+        if (protocol(0, 1) != 0):
+            fejl = fejl + 1
+        if (protocol(1, 0) != 0):
+            fejl = fejl + 1
+        if (protocol(1, 1) != 1):
+            fejl = fejl + 1
+    print("fejl", fejl)
 
 
 if __name__ == "__main__":
