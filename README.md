@@ -5,7 +5,7 @@ Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 To run the code for handin3, run the main method in the handin3.py file.
 The main method simulates the BeDOZa protocol. Preforming the AND operation is by far the hardest, and is implemented as a method call itself.
 This method call takes a dealer with the corresponding u ,v and w for Alice and Bob, they then preform the AND operation as described in 2-OTTT-BeDOZa-Passive PDF.
-One implementation quirk is that the protocol is implemented such that a dealer is made for every AND that is preformed. A implementation skip is that the XORing with ones are preformed "locally" by a method call alone with no secret sharing, since alice can XOR her input with one and then just use that as input for ANDing.
+One implementation quirk is that the protocol is implemented such that a dealer is made for every AND that is preformed. An implementation skip is that the XORing with ones are preformed "locally" by a method call alone with no secret sharing, since alice can XOR her input with one and then just use that as input for ANDing.
 
 
 
