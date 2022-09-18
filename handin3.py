@@ -2,7 +2,7 @@ import secrets
 
 import handin1
 
-
+# Dealer class to represent trusted dealer that generates [u],[v],[w]
 class Dealer:
     def __init__(self):
         self.u = secrets.randbits(1)
@@ -18,7 +18,7 @@ class Dealer:
         self.wa = secrets.randbits(1)
         self.wb = self.w ^ self.wa
 
-
+# Alice class for the and subroutine
 class AliceAnd:
     def __init__(self, ua, va, wa, x):
         self.ua = ua
@@ -55,7 +55,7 @@ class AliceAnd:
         za = self.wa ^ (self.e & self.xa) ^ (self.d & self.ya) ^ (self.e & self.d)
         return za
 
-
+# Bob class for the and subroutine
 class BobAnd:
     def __init__(self, ub, vb, wb, y):
         self.ub = ub
@@ -95,6 +95,7 @@ class BobAnd:
         return zb
 
 
+# subroutine for and protocol. Takes dealer as input for new U,V,W.
 def andProtocol(x, y, dealer):
     aliceAnd = AliceAnd(dealer.ua, dealer.va, dealer.wa, x)
     bobAnd = BobAnd(dealer.ub, dealer.vb, dealer.wb, y)
@@ -107,22 +108,27 @@ def andProtocol(x, y, dealer):
 
     return aliceAnd.calcza() ^ bobAnd.calczb()
 
+
+# Alice class to represent Alice's part of communication
 class Alice:
     def __init__(self, bta, btb, btr):
         self.bta = bta
         self.btb = btb
         self.btr = btr
 
+
+# Bob class to represent Bob's part of communication
 class Bob:
     def __init__(self, bta, btb, btr):
         self.bta = bta
         self.btb = btb
         self.btr = btr
 
-
+# Function for simulating XOR with a constant
 def xorCProtocol(x, c):
     return x ^ c
 
+# BeDOZa protocol for blood type compatability
 def bedozaProtocol(aliceBt, bobBt):
     ba = handin1.check_nth_bit(bobBt, 2)
     bb = handin1.check_nth_bit(bobBt, 1)
@@ -149,6 +155,8 @@ def bedozaProtocol(aliceBt, bobBt):
 
     return res5
 
+
+# Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
     for i in range(8):
         for j in range(8):
@@ -156,17 +164,13 @@ def testAllCombinations():
             if (handin1.bloodCompLookup(i, j) != bedozaRes):
                 print("Blood compatability mismatch with lookup table")
                 print("input:", i, j)
-                print("table:", handin1.bloodCompLookup(i, j),"BDZ:", bedozaRes)
+                print("table:", handin1.bloodCompLookup(i, j), "BDOZ:", bedozaRes)
 
     return print("All combinations tested")
 
+
 def main():
     testAllCombinations()
-
-
-
-
-
 
 
 if __name__ == "__main__":
