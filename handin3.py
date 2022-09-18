@@ -1,5 +1,8 @@
 import secrets
 
+import handin1
+
+
 class Dealer:
     def __init__(self):
         self.u = secrets.randbits(1)
@@ -16,7 +19,7 @@ class Dealer:
         self.wb = self.w ^ self.wa
 
 
-class Alice:
+class AliceAnd:
     def __init__(self, ua, va, wa, x):
         self.ua = ua
         self.va = va
@@ -53,7 +56,7 @@ class Alice:
         return za
 
 
-class Bob:
+class BobAnd:
     def __init__(self, ub, vb, wb, y):
         self.ub = ub
         self.vb = vb
@@ -92,37 +95,78 @@ class Bob:
         return zb
 
 
-def protocol(x, y):
-    dealer = Dealer()
-    alice = Alice(dealer.ua, dealer.va, dealer.wa, x)
-    bob = Bob(dealer.ub, dealer.vb, dealer.wb, y)
+def andProtocol(x, y, dealer):
+    aliceAnd = AliceAnd(dealer.ua, dealer.va, dealer.wa, x)
+    bobAnd = BobAnd(dealer.ub, dealer.vb, dealer.wb, y)
 
-    alice.receiveya(bob.shareya())
-    bob.receivexb(alice.sharexb())
+    aliceAnd.receiveya(bobAnd.shareya())
+    bobAnd.receivexb(aliceAnd.sharexb())
 
-    bob.received(alice.calcd(bob.calcdb()))
-    bob.receivee(alice.calce(bob.calceb()))
+    bobAnd.received(aliceAnd.calcd(bobAnd.calcdb()))
+    bobAnd.receivee(aliceAnd.calce(bobAnd.calceb()))
 
-    return alice.calcza() ^ bob.calczb()
+    return aliceAnd.calcza() ^ bobAnd.calczb()
 
+class Alice:
+    def __init__(self, bta, btb, btr):
+        self.bta = bta
+        self.btb = btb
+        self.btr = btr
+
+class Bob:
+    def __init__(self, bta, btb, btr):
+        self.bta = bta
+        self.btb = btb
+        self.btr = btr
+
+
+def xorCProtocol(x, c):
+    return x ^ c
+
+def bedozaProtocol(aliceBt, bobBt):
+    ba = handin1.check_nth_bit(bobBt, 2)
+    bb = handin1.check_nth_bit(bobBt, 1)
+    br = handin1.check_nth_bit(bobBt, 0)
+
+    aa = handin1.check_nth_bit(aliceBt, 2)
+    ab = handin1.check_nth_bit(aliceBt, 1)
+    ar = handin1.check_nth_bit(aliceBt, 0)
+
+    dealer1 = Dealer()
+    dealer2 = Dealer()
+    dealer3 = Dealer()
+    dealer4 = Dealer()
+    dealer5 = Dealer()
+
+    alice = Alice(aa, ab, ar)
+    bob = Bob(ba, bb, br)
+
+    res1 = xorCProtocol(andProtocol(xorCProtocol(alice.bta, 1), bob.bta, dealer1), 1)
+    res2 = xorCProtocol(andProtocol(xorCProtocol(alice.btb, 1), bob.btb, dealer2), 1)
+    res3 = xorCProtocol(andProtocol(xorCProtocol(alice.btr, 1), bob.btr, dealer3), 1)
+    res4 = andProtocol(res1, res2, dealer4)
+    res5 = andProtocol(res3, res4, dealer5)
+
+    return res5
+
+def testAllCombinations():
+    for i in range(8):
+        for j in range(8):
+            bedozaRes = bedozaProtocol(i, j)
+            if (handin1.bloodCompLookup(i, j) != bedozaRes):
+                print("Blood compatability mismatch with lookup table")
+                print("input:", i, j)
+                print("table:", handin1.bloodCompLookup(i, j),"BDZ:", bedozaRes)
+
+    return print("All combinations tested")
 
 def main():
-    fejl = 0
-    print(protocol(0,0))
-    print(protocol(0,1))
-    print(protocol(1,0))
-    print(protocol(1,1))
+    testAllCombinations()
 
-    for i in range(0,1000):
-        if(protocol(0,0) != 0):
-            fejl = fejl + 1
-        if (protocol(0, 1) != 0):
-            fejl = fejl + 1
-        if (protocol(1, 0) != 0):
-            fejl = fejl + 1
-        if (protocol(1, 1) != 1):
-            fejl = fejl + 1
-    print("fejl", fejl)
+
+
+
+
 
 
 if __name__ == "__main__":
