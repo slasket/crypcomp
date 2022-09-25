@@ -4,6 +4,7 @@ import random
 import handin1
 import elgamal
 import numpy as np
+cr = secrets.SystemRandom()
 
 
 # Alice class to represent Alice's part of communication
@@ -18,17 +19,17 @@ class Alice:
         self.h = None
 
     def keyGen(self):
-        self.q = random.randint(pow(10,20),pow(10,50))
-        self.g = random.randint(2, self.q)
+        self.q = secrets.SystemRandom.randint(cr,pow(10,20),pow(10,50))
+        self.g = secrets.SystemRandom.randint(cr,2, self.q)
         self.key = elgamal.gen_key(self.q)
         self.h = elgamal.power(self.g, self.key, self.q)
         return self.g, self.h
 
     def oGen(self):
-        g = random.randint(2, self.q)
+        g = secrets.SystemRandom.randint(cr,2, self.q)
         tal = pow(10,50) + 1
         bitlength = tal.bit_length()
-        r = random.randint(1, pow(2, 2 * bitlength))
+        r = secrets.SystemRandom.randint(cr,1, pow(2, 2 * bitlength))
         rmodq = r % self.q
         h = pow(rmodq, 2) % self.q
         return [g, h]
