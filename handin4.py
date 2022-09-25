@@ -1,6 +1,4 @@
 import secrets
-import random
-
 import handin1
 import elgamal
 import numpy as np
@@ -20,6 +18,8 @@ class Alice:
 
     #ElGamal key generation as done in the the ElGamal.py file
     def keyGen(self):
+        #In practice this would be a large and safe prime, however inorder to quickly test that the algorithm works.
+        #This has a chance of failure since the order q chosen might not be prime
         self.q = secrets.SystemRandom.randint(cr,pow(10,20),pow(10,50))
         self.g = secrets.SystemRandom.randint(cr,2, self.q)
         self.key = elgamal.gen_key(self.q)

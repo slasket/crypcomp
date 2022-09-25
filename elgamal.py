@@ -1,5 +1,6 @@
 import secrets
 from math import pow
+
 cr = secrets.SystemRandom()
 a=secrets.SystemRandom.randint(cr, 2,10)
 
@@ -28,7 +29,7 @@ def power(a,b,c):
     y=a
     while b>0:
         if b%2==0:
-            x=(x*y)%c;
+            x=(x*y)%c
         y=(y*y)%c
         b=int(b/2)
     return x%c
@@ -55,6 +56,8 @@ def decryption(ct,p,key,q):
         pt.append(chr(int(ct[i]/h)))
     return pt
 
+
+
 def main():
     msg=input("Enter message.")
     q=secrets.SystemRandom.randint(cr, pow(10,20),pow(10,50))
@@ -69,6 +72,9 @@ def main():
     pt=decryption(ct,p,key,q)
     d_msg=''.join(pt)
     print("Decryted Message=",d_msg)
+
+
+
 
 def decrypt(ct, p ,key, q):
     pt=decryption(ct,p,key,q)
