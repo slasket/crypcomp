@@ -1,7 +1,7 @@
-import random
+import secrets
 from math import pow
-
-a=random.randint(2,10)
+cr = secrets.SystemRandom()
+a=secrets.SystemRandom.randint(cr, 2,10)
 
 #To fing gcd of two numbers
 def gcd(a,b):
@@ -14,9 +14,9 @@ def gcd(a,b):
 
 #For key generation i.e. large random number
 def gen_key(q):
-    key= random.randint(pow(10,20),q)
+    key= secrets.SystemRandom.randint(cr, pow(10,20),q)
     while gcd(q,key)!=1:
-        key=random.randint(pow(10,20),q)
+        key=secrets.SystemRandom.randint(cr, pow(10,20),q)
     return key
 
 def power(a,b,c):
@@ -53,8 +53,8 @@ def decryption(ct,p,key,q):
 
 def main():
     msg=input("Enter message.")
-    q=random.randint(pow(10,20),pow(10,50))
-    g=random.randint(2,q)
+    q=secrets.SystemRandom.randint(cr, pow(10,20),pow(10,50))
+    g=secrets.SystemRandom.randint(cr, 2,q)
     key=gen_key(q)
     h=power(g,key,q)
     print("g used=",g)
@@ -65,13 +65,6 @@ def main():
     pt=decryption(ct,p,key,q)
     d_msg=''.join(pt)
     print("Decryted Message=",d_msg)
-
-def encrypt(message, q, h ,g):
-    #q=random.randint(pow(10,20),pow(10,50))
-    #g=random.randint(2,q)
-    #h=power(g,key,q)
-    ct,p=encryption(message,q,h,g)
-    return ct, p
 
 def decrypt(ct, p ,key, q):
     pt=decryption(ct,p,key,q)
