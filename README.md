@@ -2,7 +2,8 @@
 Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 
 ### Handin 4:
-Her simon
+To run the code for handin4, run the main method in the handin4.py file.
+This simulates the 1 out of 8 oblivious transfer protocol for the blood compatability function using El Gamal as the PKE scheme. To summarize, Alice generates a keypair for El Gamal as well as 7 other using OGen which she sends to Bob. Bob then encrypts the 8 messages using the 8 different keys, which he sends back to Alice. Since Alice knows her choice bit b, she simply decrypts the corresponding message and reads the result. The test run compares the result of all possible bloodtype combinations of donor and recipient with the values given by a truthtable structure containing the same information.
 
 ### Handin 3:
 To run the code for handin3, run the main method in the handin3.py file.
