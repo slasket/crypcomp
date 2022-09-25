@@ -1,4 +1,6 @@
-tt = [
+import numpy as np
+
+tt = np.array([
     [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
     [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
     [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
@@ -7,11 +9,11 @@ tt = [
     [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
     [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
     [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
-]
+])
 
 
 def bloodCompLookup(donor, receiver):
-    return tt[donor][receiver]
+    return tt[donor, receiver]
 
 
 def AND(a, b):  # From https://www.geeksforgeeks.org/logic-gates-in-python/
@@ -58,7 +60,7 @@ def testAllCombinations():
             if (bloodCompLookup(i, j) != bloodCompTest(int(iBin), int(jBin))):
                 return "Blood compatability mismatch with lookup table"
 
-    return "All combinationd tested"
+    return print("All combinationd tested")
 
 
 def main():
