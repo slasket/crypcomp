@@ -18,6 +18,7 @@ class Alice:
         self.g = None
         self.h = None
 
+    #ElGamal key generation as done in the the ElGamal.py file
     def keyGen(self):
         self.q = secrets.SystemRandom.randint(cr,pow(10,20),pow(10,50))
         self.g = secrets.SystemRandom.randint(cr,2, self.q)
@@ -25,15 +26,17 @@ class Alice:
         self.h = elgamal.power(self.g, self.key, self.q)
         return self.g, self.h
 
+    #Oblivious keygen algorithm
+    #Picks h as a random number r between 1 and 2^2n and then r^2 mod q
     def oGen(self):
         g = secrets.SystemRandom.randint(cr,2, self.q)
         tal = pow(10,50) + 1
         bitlength = tal.bit_length()
         r = secrets.SystemRandom.randint(cr,1, pow(2, 2 * bitlength))
-        rmodq = r % self.q
-        h = pow(rmodq, 2) % self.q
+        h = pow(r, 2) % self.q
         return [g, h]
 
+    #Generate the array of encryption keys where one key corresponds to an actual encryption key pair
     def createPKArray(self):
         self.keyGen()
         for i in range(0, 8):
@@ -41,6 +44,7 @@ class Alice:
         self.pkArray[self.bt] = [self.g, self.h]
         return self.pkArray, self.q
 
+    #receive the array of encrypted ciphertexts and decrypt the one that corresponds to alices bloodtype
     def receiveCipherArray(self, cArray):
         ct, p = cArray[self.bt]
         res = elgamal.decrypt(ct, p, self.key, self.q)
@@ -52,6 +56,8 @@ class Bob:
     def __init__(self, bt):
         self.bt = bt
 
+    #Receive the array of encryption keys, bob then selectes the slicing of the truth table corresponding to his bloodtype.
+    #Then encrypt the slicing using the keys given by alice.
     def receiveArray(self, pkArray, q):
         nparray = np.array(handin1.tt)
         btSlice = nparray[:, self.bt]
