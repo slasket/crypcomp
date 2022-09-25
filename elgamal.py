@@ -3,6 +3,10 @@ from math import pow
 cr = secrets.SystemRandom()
 a=secrets.SystemRandom.randint(cr, 2,10)
 
+# This has been taken from https://www.codespeedy.com/elgamal-encryption-algorithm-in-python/
+# We use this implementation as a correct secure implementation of ElGamal encryption although though we can see that the keyGen function might not always generate a safe prime.
+
+
 #To fing gcd of two numbers
 def gcd(a,b):
     if a<b:
