@@ -1,6 +1,7 @@
 import secrets
 
 import handin1
+import numpy as np
 
 # Dealer class to represent trusted dealer that generates [u],[v],[w]
 class Dealer:
@@ -20,22 +21,17 @@ class Dealer:
 
 # Alice class for the and subroutine
 class AliceAnd:
-    def __init__(self, ua, va, wa, x):
+    def __init__(self, ua, va, wa, xa):
         self.ua = ua
         self.va = va
         self.wa = wa
+        self.xa = xa
 
-        self.x = x
-        self.xa = secrets.randbits(1)
-        self.xb = self.x ^ self.xa
 
         self.ya = None
         self.da = None
         self.d = None
         self.e = None
-
-    def sharexb(self):
-        return self.xb
 
     def receiveya(self, ya):
         self.ya = ya
@@ -57,22 +53,16 @@ class AliceAnd:
 
 # Bob class for the and subroutine
 class BobAnd:
-    def __init__(self, ub, vb, wb, y):
+    def __init__(self, ub, vb, wb, yb):
         self.ub = ub
         self.vb = vb
         self.wb = wb
-
-        self.y = y
-        self.ya = secrets.randbits(1)
-        self.yb = self.y ^ self.ya
+        self.yb = yb
 
         self.xb = None
 
         self.d = None
         self.e = None
-
-    def shareya(self):
-        return self.ya
 
     def receivexb(self, xb):
         self.xb = xb
@@ -96,17 +86,17 @@ class BobAnd:
 
 
 # subroutine for and protocol. Takes dealer as input for new U,V,W.
-def andProtocol(x, y, dealer):
-    aliceAnd = AliceAnd(dealer.ua, dealer.va, dealer.wa, x)
-    bobAnd = BobAnd(dealer.ub, dealer.vb, dealer.wb, y)
+def andProtocol(xa, xb, ya, yb, dealer):
+    aliceAnd = AliceAnd(dealer.ua, dealer.va, dealer.wa, xa)
+    bobAnd = BobAnd(dealer.ub, dealer.vb, dealer.wb, yb)
 
-    aliceAnd.receiveya(bobAnd.shareya())
-    bobAnd.receivexb(aliceAnd.sharexb())
+    aliceAnd.receiveya(ya)
+    bobAnd.receivexb(xb)
 
     bobAnd.received(aliceAnd.calcd(bobAnd.calcdb()))
     bobAnd.receivee(aliceAnd.calce(bobAnd.calceb()))
 
-    return aliceAnd.calcza() ^ bobAnd.calczb()
+    return aliceAnd.calcza(), bobAnd.calczb()
 
 
 # Alice class to represent Alice's part of communication
@@ -115,6 +105,7 @@ class Alice:
         self.bta = bta
         self.btb = btb
         self.btr = btr
+        self.calcs = [0]*17
 
 
 # Bob class to represent Bob's part of communication
@@ -123,10 +114,17 @@ class Bob:
         self.bta = bta
         self.btb = btb
         self.btr = btr
+        self.calcs = [0]*17
 
 # Function for simulating XOR with a constant
-def xorCProtocol(x, c):
-    return x ^ c
+def xorCProtocol(x, y, c):
+    return x ^ c, y
+
+def secretShare(x):
+    xa = secrets.randbits(1)
+    xb = x ^ xa
+
+    return xa, xb
 
 # BeDOZa protocol for blood type compatability
 def bedozaProtocol(aliceBt, bobBt):
@@ -147,17 +145,43 @@ def bedozaProtocol(aliceBt, bobBt):
     alice = Alice(aa, ab, ar)
     bob = Bob(ba, bb, br)
 
-    res1 = xorCProtocol(andProtocol(xorCProtocol(alice.bta, 1), bob.bta, dealer1), 1)
-    res2 = xorCProtocol(andProtocol(xorCProtocol(alice.btb, 1), bob.btb, dealer2), 1)
-    res3 = xorCProtocol(andProtocol(xorCProtocol(alice.btr, 1), bob.btr, dealer3), 1)
-    res4 = andProtocol(res1, res2, dealer4)
-    res5 = andProtocol(res3, res4, dealer5)
+    alice.calcs[0], bob.calcs[0] = secretShare(alice.bta)
+    alice.calcs[1], bob.calcs[1] = xorCProtocol(alice.calcs[0], bob.calcs[0], 1)
+    alice.calcs[2], bob.calcs[2] = secretShare(bob.bta)
+    alice.calcs[3], bob.calcs[3] = andProtocol(alice.calcs[1], bob.calcs[1], alice.calcs[2], bob.calcs[2], dealer1)
+    alice.calcs[4], bob.calcs[4] = xorCProtocol(alice.calcs[3], bob.calcs[3], 1)
 
-    return res5
+    alice.calcs[5], bob.calcs[5] = secretShare(alice.btb)
+    alice.calcs[6], bob.calcs[6] = xorCProtocol(alice.calcs[5], bob.calcs[5], 1)
+    alice.calcs[7], bob.calcs[7] = secretShare(bob.btb)
+    alice.calcs[8], bob.calcs[8] = andProtocol(alice.calcs[6], bob.calcs[6],  alice.calcs[7], bob.calcs[7], dealer2)
+    alice.calcs[9], bob.calcs[9] = xorCProtocol(alice.calcs[8], bob.calcs[8], 1)
+
+    alice.calcs[10], bob.calcs[10] = secretShare(alice.btr)
+    alice.calcs[11], bob.calcs[11] = xorCProtocol(alice.calcs[10], bob.calcs[10], 1)
+    alice.calcs[12], bob.calcs[12] = secretShare(bob.btr)
+    alice.calcs[13], bob.calcs[13] = andProtocol(alice.calcs[11], bob.calcs[11],  alice.calcs[12], bob.calcs[12], dealer3)
+    alice.calcs[14], bob.calcs[14] = xorCProtocol(alice.calcs[13], bob.calcs[13], 1)
+
+    alice.calcs[15], bob.calcs[15] = andProtocol(alice.calcs[4], bob.calcs[4],  alice.calcs[9], bob.calcs[9], dealer4)
+    alice.calcs[16], bob.calcs[16] = andProtocol(alice.calcs[14], bob.calcs[14],  alice.calcs[15], bob.calcs[15], dealer5)
+    res = alice.calcs[16] ^ bob.calcs[16]
+
+    return res
 
 
 # Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
+    tt = np.array([
+        [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
+        [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
+        [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
+        [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
+        [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
+        [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
+        [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
+        [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
+    ])
     for i in range(8):
         for j in range(8):
             bedozaRes = bedozaProtocol(i, j)
@@ -166,6 +190,8 @@ def testAllCombinations():
                 print("input:", i, j)
                 print("table:", handin1.bloodCompLookup(i, j), "BDOZ:", bedozaRes)
 
+            tt[i,j] = bedozaRes
+    print(tt)
     return print("All combinations tested")
 
 
