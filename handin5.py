@@ -26,9 +26,9 @@ def evaluation(keyLeft, keyRight, garbledGate):
     print("Eval")
     for i, cipher in enumerate(garbledGate):
         keyCandidate = cipher ^ c1
-        print(bin(keyCandidate))
-        if (bin(keyCandidate)[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
-            return bin(keyCandidate)[:130]
+        print(format(keyCandidate, '0128b'))
+        if (format(keyCandidate, '0128b')[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+            return format(keyCandidate, '0256b')[:128]
 
 def garbleMyGate(gate, left, right, output):
     L0, L1 = left
@@ -68,14 +68,16 @@ def garbleMyCircuit():
     inputWires = 2
     # d = (Z0, Z1)
     d = wireKeys[len(wireKeys)-1]
-    garbledGate = garbleMyGate("AND", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
+    garbledGate = garbleMyGate("XOR", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
     L0, L1 = wireKeys[0]
     R0, R1 = wireKeys[1]
     K0, K1 = wireKeys[2]
     temp = evaluation(L1, R1, garbledGate)
+    print("k0", format(K0, '0128b'))
+    print("k1", format(K1, '0128b'))
     print("Result")
     print(temp)
-    print(bin(K1))
+    print(format(K0, '0128b'))
 
 
 def main():
