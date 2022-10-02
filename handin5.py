@@ -236,24 +236,13 @@ class Bob:
 
 # Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
-    otResArray = [
-        [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
-        [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
-        [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
-        [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
-        [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
-        [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
-        [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
-        [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
-    ]
     for i in range(8):
         for j in range(8):
             gcRes = protocol(i, j)
-            otResArray[i][j] = gcRes
             if (handin1.bloodCompLookup(i, j) != gcRes):
                 print("Blood compatability mismatch with lookup table")
                 print("input:", i, j)
-                print("table:", handin1.bloodCompLookup(i, j), "OT:", gcRes)
+                print("table:", handin1.bloodCompLookup(i, j), "Garbled Circuit:", gcRes)
     return print("All combinations tested")
 
 # Runs Yao's protocol implemented to compute the blood type compatibility function
