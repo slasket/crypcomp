@@ -6,89 +6,6 @@ import elgamal
 
 cr = secrets.SystemRandom()
 
-
-def generateGarbleKeys(circuitSize=23):
-    wireKeys = np.zeros(circuitSize, dtype=object)
-
-    for i in range(len(wireKeys)):
-        randomKey1 = secrets.randbits(128)
-        randomKey2 = secrets.randbits(128)
-        wireKeys[i] = randomKey1, randomKey2
-    return wireKeys
-
-
-def evaluation(keyLeft, keyRight, garbledGate):
-    c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
-    for i, cipher in enumerate(garbledGate):
-        keyCandidate = cipher ^ c1
-        bitKey = format(keyCandidate, '0256b')
-        #print("bitkey", bitKey)
-        if (bitKey[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
-            return int(bitKey[:128], 2)
-
-
-def garbleMyGate(gate, left, right, output):
-    L0, L1 = left
-    R0, R1 = right
-    K0, K1 = output
-    K0_with_redundancy = K0 << 128  # int.from_bytes(bytearray(K0.to_bytes(128, "big")) + bytearray(128), "big")
-    K1_with_redundancy = K1 << 128  # int.from_bytes(bytearray(K1.to_bytes(128, "big")) + bytearray(128), "big")
-    if gate == "AND":
-        # [0, 0, 0]
-        # [1, 0, 0]
-        # [0, 1, 0]
-        # [1, 1, 1]
-        c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
-        c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
-        c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
-        c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
-        ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
-        return ciphertexts
-    elif gate == "XOR":
-        # [0, 0, 0]
-        # [1, 0, 1]
-        # [0, 1, 1]
-        # [1, 1, 0]
-        c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
-        c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
-        c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
-        c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
-        ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
-        return ciphertexts
-
-
-def evaluateGC(gates, inputKeys):
-    inputKeys[12] = evaluation(inputKeys[6], inputKeys[0], gates[0])  # XOR
-    inputKeys[13] = evaluation(inputKeys[7], inputKeys[1], gates[1])  # XOR
-    inputKeys[14] = evaluation(inputKeys[8], inputKeys[2], gates[2])  # XOR
-
-    inputKeys[15] = evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
-    inputKeys[16] = evaluation(inputKeys[13], inputKeys[4], gates[4])  # AND
-    inputKeys[17] = evaluation(inputKeys[14], inputKeys[5], gates[5])  # AND
-
-    inputKeys[18] = evaluation(inputKeys[9], inputKeys[15], gates[6])  # XOR
-    inputKeys[19] = evaluation(inputKeys[10], inputKeys[16], gates[7])  # XOR
-    inputKeys[20] = evaluation(inputKeys[11], inputKeys[17], gates[8])  # XOR
-
-    inputKeys[21] = evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
-    return evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
-
-    # inputKeys[12] = evaluation(inputKeys[1], inputKeys[2], gates[0])  # XOR
-    # inputKeys[13] = evaluation(inputKeys[5], inputKeys[6], gates[1])  # XOR
-    # inputKeys[14] = evaluation(inputKeys[9], inputKeys[10], gates[2])  # XOR
-
-    # inputKeys[15] = evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
-    # inputKeys[16] = evaluation(inputKeys[13], inputKeys[7], gates[4])  # AND
-    # inputKeys[17] = evaluation(inputKeys[14], inputKeys[11], gates[5])  # AND
-
-    # inputKeys[18] = evaluation(inputKeys[0], inputKeys[15], gates[6])  # XOR
-    # inputKeys[19] = evaluation(inputKeys[4], inputKeys[16], gates[7])  # XOR
-    # inputKeys[20] = evaluation(inputKeys[8], inputKeys[17], gates[8])  # XOR
-
-    # inputKeys[21] = evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
-    # return evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
-
-
 # Alice class to represent Alice's part of communication
 class Alice:
     def __init__(self, bt):
@@ -143,7 +60,7 @@ class Alice:
     def receiveGarbleYandDecrypt(self, gg, x, y, d):
         inputKeys = self.constructInput(x, y)
 
-        res = evaluateGC(gg, inputKeys)
+        res = self.evaluateGC(gg, inputKeys)
 
         return self.decrypt(d, res)
 
@@ -174,12 +91,53 @@ class Alice:
         else:
             return None
 
+    def evaluation(self, keyLeft, keyRight, garbledGate):
+        c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
+        for i, cipher in enumerate(garbledGate):
+            keyCandidate = cipher ^ c1
+            bitKey = format(keyCandidate, '0256b')
+            # print("bitkey", bitKey)
+            if (bitKey[
+                -128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+                return int(bitKey[:128], 2)
+
+    def evaluateGC(self, gates, inputKeys):
+        inputKeys[12] = self.evaluation(inputKeys[6], inputKeys[0], gates[0])  # XOR
+        inputKeys[13] = self.evaluation(inputKeys[7], inputKeys[1], gates[1])  # XOR
+        inputKeys[14] = self.evaluation(inputKeys[8], inputKeys[2], gates[2])  # XOR
+
+        inputKeys[15] = self.evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
+        inputKeys[16] = self.evaluation(inputKeys[13], inputKeys[4], gates[4])  # AND
+        inputKeys[17] = self.evaluation(inputKeys[14], inputKeys[5], gates[5])  # AND
+
+        inputKeys[18] = self.evaluation(inputKeys[9], inputKeys[15], gates[6])  # XOR
+        inputKeys[19] = self.evaluation(inputKeys[10], inputKeys[16], gates[7])  # XOR
+        inputKeys[20] = self.evaluation(inputKeys[11], inputKeys[17], gates[8])  # XOR
+
+        inputKeys[21] = self.evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
+        return self.evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
+
+        # inputKeys[12] = evaluation(inputKeys[1], inputKeys[2], gates[0])  # XOR
+        # inputKeys[13] = evaluation(inputKeys[5], inputKeys[6], gates[1])  # XOR
+        # inputKeys[14] = evaluation(inputKeys[9], inputKeys[10], gates[2])  # XOR
+
+        # inputKeys[15] = evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
+        # inputKeys[16] = evaluation(inputKeys[13], inputKeys[7], gates[4])  # AND
+        # inputKeys[17] = evaluation(inputKeys[14], inputKeys[11], gates[5])  # AND
+
+        # inputKeys[18] = evaluation(inputKeys[0], inputKeys[15], gates[6])  # XOR
+        # inputKeys[19] = evaluation(inputKeys[4], inputKeys[16], gates[7])  # XOR
+        # inputKeys[20] = evaluation(inputKeys[8], inputKeys[17], gates[8])  # XOR
+
+        # inputKeys[21] = evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
+        # return evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
+
 
 # Bob class to represent Bob's part of communication
 class Bob:
     def __init__(self, bt):
         self.bt = bt
-        self.wireKeys = generateGarbleKeys()
+        self.wireKeys = self.generateGarbleKeys()
 
     # Receive the array of encryption keys, bob then selectes the slicing of the truth table corresponding to his bloodtype.
     # Then encrypt the slicing using the keys given by alice.
@@ -223,20 +181,20 @@ class Bob:
         wireKeys = self.wireKeys
         gates = []
 
-        gates.append(garbleMyGate("XOR", left=wireKeys[6], right=wireKeys[0], output=wireKeys[12]))
-        gates.append(garbleMyGate("XOR", left=wireKeys[7], right=wireKeys[1], output=wireKeys[13]))
-        gates.append(garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[2], output=wireKeys[14]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[6], right=wireKeys[0], output=wireKeys[12]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[7], right=wireKeys[1], output=wireKeys[13]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[2], output=wireKeys[14]))
 
-        gates.append(garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15]))
-        gates.append(garbleMyGate("AND", left=wireKeys[13], right=wireKeys[4], output=wireKeys[16]))
-        gates.append(garbleMyGate("AND", left=wireKeys[14], right=wireKeys[5], output=wireKeys[17]))
+        gates.append(self.garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15]))
+        gates.append(self.garbleMyGate("AND", left=wireKeys[13], right=wireKeys[4], output=wireKeys[16]))
+        gates.append(self.garbleMyGate("AND", left=wireKeys[14], right=wireKeys[5], output=wireKeys[17]))
 
-        gates.append(garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[15], output=wireKeys[18]))
-        gates.append(garbleMyGate("XOR", left=wireKeys[10], right=wireKeys[16], output=wireKeys[19]))
-        gates.append(garbleMyGate("XOR", left=wireKeys[11], right=wireKeys[17], output=wireKeys[20]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[15], output=wireKeys[18]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[10], right=wireKeys[16], output=wireKeys[19]))
+        gates.append(self.garbleMyGate("XOR", left=wireKeys[11], right=wireKeys[17], output=wireKeys[20]))
 
-        gates.append(garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21]))
-        gates.append(garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22]))
+        gates.append(self.garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21]))
+        gates.append(self.garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22]))
 
         #gates.append(garbleMyGate("XOR", left=wireKeys[1], right=wireKeys[2], output=wireKeys[12]))
         #gates.append(garbleMyGate("XOR", left=wireKeys[5], right=wireKeys[6], output=wireKeys[13]))
@@ -269,6 +227,44 @@ class Bob:
 
     def decryptionTable(self):
         return self.wireKeys[22][0], self.wireKeys[22][1]
+
+    def generateGarbleKeys(self, circuitSize=23):
+        wireKeys = np.zeros(circuitSize, dtype=object)
+
+        for i in range(len(wireKeys)):
+            randomKey1 = secrets.randbits(128)
+            randomKey2 = secrets.randbits(128)
+            wireKeys[i] = randomKey1, randomKey2
+        return wireKeys
+
+    def garbleMyGate(self, gate, left, right, output):
+        L0, L1 = left
+        R0, R1 = right
+        K0, K1 = output
+        K0_with_redundancy = K0 << 128  # int.from_bytes(bytearray(K0.to_bytes(128, "big")) + bytearray(128), "big")
+        K1_with_redundancy = K1 << 128  # int.from_bytes(bytearray(K1.to_bytes(128, "big")) + bytearray(128), "big")
+        if gate == "AND":
+            # [0, 0, 0]
+            # [1, 0, 0]
+            # [0, 1, 0]
+            # [1, 1, 1]
+            c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+            c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+            c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+            c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+            ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
+            return ciphertexts
+        elif gate == "XOR":
+            # [0, 0, 0]
+            # [1, 0, 1]
+            # [0, 1, 1]
+            # [1, 1, 0]
+            c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+            c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+            c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+            c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+            ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
+            return ciphertexts
 
 
 # OT protocol for blood type compatability
