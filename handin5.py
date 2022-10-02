@@ -23,12 +23,11 @@ def generateGarbleKeys(circuitSize=23):
 
 def evaluation(keyLeft, keyRight, garbledGate):
     c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
-    print("Eval")
     for i, cipher in enumerate(garbledGate):
         keyCandidate = cipher ^ c1
-        print(format(keyCandidate, '0128b'))
-        if (format(keyCandidate, '0128b')[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
-            return format(keyCandidate, '0256b')[:128]
+        bitKey = format(keyCandidate, '0256b')
+        if (bitKey[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+            return int(bitKey[:128],2)
 
 def garbleMyGate(gate, left, right, output):
     L0, L1 = left
@@ -36,8 +35,6 @@ def garbleMyGate(gate, left, right, output):
     K0, K1 = output
     K0_with_redundancy = K0 << 128 #int.from_bytes(bytearray(K0.to_bytes(128, "big")) + bytearray(128), "big")
     K1_with_redundancy = K1 << 128 #int.from_bytes(bytearray(K1.to_bytes(128, "big")) + bytearray(128), "big")
-    print("gg")
-    print(K1_with_redundancy)
     if gate == "AND":
         #[0, 0, 0]
         #[1, 0, 0]
@@ -68,16 +65,30 @@ def garbleMyCircuit():
     inputWires = 2
     # d = (Z0, Z1)
     d = wireKeys[len(wireKeys)-1]
-    garbledGate = garbleMyGate("XOR", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
-    L0, L1 = wireKeys[0]
-    R0, R1 = wireKeys[1]
-    K0, K1 = wireKeys[2]
-    temp = evaluation(L1, R1, garbledGate)
-    print("k0", format(K0, '0128b'))
-    print("k1", format(K1, '0128b'))
+    garbledGate1 = garbleMyGate("AND", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
+    garbledGate2 = garbleMyGate("AND", left=wireKeys[3], right=wireKeys[4], output=wireKeys[5])
+    garbledGate3 = garbleMyGate("AND", left=wireKeys[2], right=wireKeys[5], output=wireKeys[8])
+    aL0, aL1 = wireKeys[0]
+    aR0, aR1 = wireKeys[1]
+    svar0 = evaluation(aL1, aR1, garbledGate1)
+    print("svar0", svar0)
+
+    bL0, bL1 = wireKeys[3]
+    bR0, bR1 = wireKeys[4]
+    svar1 = evaluation(bL1, bR1, garbledGate2)
+    print("svar1", svar1)
+    forket, svar = wireKeys[8]
+    cL0, cL1 = wireKeys[2]
+    cR0, cR1 = wireKeys[5]
+    print("cL1", cL1)
+    print("cR1", cR1)
+    temp1 = evaluation(svar0, svar1, garbledGate3)
+    #temp2 = evaluation(cL1, cR1, garbledGate3)
+
     print("Result")
-    print(temp)
-    print(format(K0, '0128b'))
+    print(temp1)
+    #print(temp2)
+    print(svar)
 
 
 def main():
