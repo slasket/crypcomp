@@ -2,16 +2,9 @@ import hashlib as hash
 import numpy as np
 import secrets
 import handin1
+import elgamal
 
-
-class Alice:
-    def __init__(self, bt):
-        self.bt = bt
-
-
-class Bob:
-    def __init__(self, bt):
-        self.bt = bt
+cr = secrets.SystemRandom()
 
 
 def generateGarbleKeys(circuitSize=23):
@@ -29,8 +22,8 @@ def evaluation(keyLeft, keyRight, garbledGate):
     for i, cipher in enumerate(garbledGate):
         keyCandidate = cipher ^ c1
         bitKey = format(keyCandidate, '0256b')
-        if (bitKey[
-            -128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+        print("bitkey", bitKey)
+        if (bitKey[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
             return int(bitKey[:128], 2)
 
 
@@ -64,136 +57,247 @@ def garbleMyGate(gate, left, right, output):
         return ciphertexts
 
 
-def garbleMyCircuit(aliceBt, bobBt):
-
-    ba = handin1.check_nth_bit(bobBt, 2)
-    bb = handin1.check_nth_bit(bobBt, 1)
-    br = handin1.check_nth_bit(bobBt, 0)
-
-    aa = handin1.check_nth_bit(aliceBt, 2)
-    ab = handin1.check_nth_bit(aliceBt, 1)
-    ar = handin1.check_nth_bit(aliceBt, 0)
-
-
-    wireKeys = generateGarbleKeys()
-
-    inputWires = 2
-    # d = (Z0, Z1)
-    d = wireKeys[len(wireKeys) - 1]
-
-    gates = []
-    # garbledGateXOR1 = garbleMyGate("XOR", left=wireKeys[1], right=wireKeys[2], output=wireKeys[12])
-    # garbledGateXOR2 = garbleMyGate("XOR", left=wireKeys[5], right=wireKeys[6], output=wireKeys[13])
-    # garbledGateXOR3 = garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[10], output=wireKeys[14])
-
-    # garbledGateAND3 = garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15])
-    # garbledGateAND4 = garbleMyGate("AND", left=wireKeys[13], right=wireKeys[7], output=wireKeys[16])
-    # garbledGateAND5 = garbleMyGate("AND", left=wireKeys[14], right=wireKeys[11], output=wireKeys[17])
-
-    # garbledGateXOR6 = garbleMyGate("XOR", left=wireKeys[0], right=wireKeys[15], output=wireKeys[18])
-    # garbledGateXOR7 = garbleMyGate("XOR", left=wireKeys[4], right=wireKeys[16], output=wireKeys[19])
-    # garbledGateXOR8 = garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[17], output=wireKeys[20])
-
-    # garbledGateAND9 = garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21])
-    # garbledGateAND10 = garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22])
-
-    gates.append(garbleMyGate("XOR", left=wireKeys[1], right=wireKeys[2], output=wireKeys[12]))
-    gates.append(garbleMyGate("XOR", left=wireKeys[5], right=wireKeys[6], output=wireKeys[13]))
-    gates.append(garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[10], output=wireKeys[14]))
-
-    gates.append(garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15]))
-    gates.append(garbleMyGate("AND", left=wireKeys[13], right=wireKeys[7], output=wireKeys[16]))
-    gates.append(garbleMyGate("AND", left=wireKeys[14], right=wireKeys[11], output=wireKeys[17]))
-
-    gates.append(garbleMyGate("XOR", left=wireKeys[0], right=wireKeys[15], output=wireKeys[18]))
-    gates.append(garbleMyGate("XOR", left=wireKeys[4], right=wireKeys[16], output=wireKeys[19]))
-    gates.append(garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[17], output=wireKeys[20]))
-
-    gates.append(garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21]))
-    gates.append(garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22]))
-
-    input = [1, 1,
-             aa, ba,
-             1, 1,
-             ab, bb,
-             1, 1,
-             ar, br]
-    inputKeys = [0] * 23
-
-    for i in range(12):
-        inputKeys[i] = wireKeys[i][input[i]]
-
-    #print(inputKeys)
-
-    #print(evaluation(inputKeys[1], inputKeys[2], gates[0]))
-    inputKeys[12] = evaluation(inputKeys[1], inputKeys[2], gates[0])  # XOR
-    inputKeys[13] = evaluation(inputKeys[5], inputKeys[6], gates[1])  # XOR
-    inputKeys[14] = evaluation(inputKeys[9], inputKeys[10], gates[2])  # XOR
+def evaluateGC(gates, inputKeys):
+    inputKeys[12] = evaluation(inputKeys[6], inputKeys[0], gates[0])  # XOR
+    print(inputKeys[6])
+    print(inputKeys[0])
+    print("12", evaluation(inputKeys[6], inputKeys[0], gates[0]))
+    inputKeys[13] = evaluation(inputKeys[7], inputKeys[1], gates[1])  # XOR
+    inputKeys[14] = evaluation(inputKeys[8], inputKeys[2], gates[2])  # XOR
 
     inputKeys[15] = evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
-    inputKeys[16] = evaluation(inputKeys[13], inputKeys[7], gates[4])  # AND
-    inputKeys[17] = evaluation(inputKeys[14], inputKeys[11], gates[5])  # AND
+    inputKeys[16] = evaluation(inputKeys[13], inputKeys[4], gates[4])  # AND
+    inputKeys[17] = evaluation(inputKeys[14], inputKeys[5], gates[5])  # AND
 
-    inputKeys[18] = evaluation(inputKeys[0], inputKeys[15], gates[6])  # XOR
-    inputKeys[19] = evaluation(inputKeys[4], inputKeys[16], gates[7])  # XOR
-    inputKeys[20] = evaluation(inputKeys[8], inputKeys[17], gates[8])  # XOR
+    inputKeys[18] = evaluation(inputKeys[9], inputKeys[15], gates[6])  # XOR
+    inputKeys[19] = evaluation(inputKeys[10], inputKeys[16], gates[7])  # XOR
+    inputKeys[20] = evaluation(inputKeys[11], inputKeys[17], gates[8])  # XOR
 
     inputKeys[21] = evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
-    inputKeys[22] = evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
+    return evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
 
-    #print("res", inputKeys[22])
-    #print("svar0", wireKeys[22][0])
-    #print("svar1", wireKeys[22][1])
+    # inputKeys[12] = evaluation(inputKeys[1], inputKeys[2], gates[0])  # XOR
+    # inputKeys[13] = evaluation(inputKeys[5], inputKeys[6], gates[1])  # XOR
+    # inputKeys[14] = evaluation(inputKeys[9], inputKeys[10], gates[2])  # XOR
 
-    if inputKeys[22] == wireKeys[22][1]:
-        return 1
-    elif inputKeys[22] == wireKeys[22][0]:
-        return 0
-    else:
-        return "shit"
-    # for i, gate in enumerate(gates):
-    #    print(evaluation((inputKeys[(i*2)-1]),
-    #                     (inputKeys[(i*2)]),
-    #                     gate))
+    # inputKeys[15] = evaluation(inputKeys[12], inputKeys[3], gates[3])  # AND
+    # inputKeys[16] = evaluation(inputKeys[13], inputKeys[7], gates[4])  # AND
+    # inputKeys[17] = evaluation(inputKeys[14], inputKeys[11], gates[5])  # AND
 
-    # aL0, aL1 = wireKeys[0]
-    # aR0, aR1 = wireKeys[1]
-    # svar0 = evaluation(aL1, aR1, garbledGate1)
-    # print("svar0", svar0)
+    # inputKeys[18] = evaluation(inputKeys[0], inputKeys[15], gates[6])  # XOR
+    # inputKeys[19] = evaluation(inputKeys[4], inputKeys[16], gates[7])  # XOR
+    # inputKeys[20] = evaluation(inputKeys[8], inputKeys[17], gates[8])  # XOR
 
-    # bL0, bL1 = wireKeys[3]
-    # bR0, bR1 = wireKeys[4]
-    # svar1 = evaluation(bL1, bR1, garbledGate2)
-    # print("svar1", svar1)
-    # forket, svar = wireKeys[8]
-    # cL0, cL1 = wireKeys[2]
-    # cR0, cR1 = wireKeys[5]
-    # print("cL1", cL1)
-    # print("cR1", cR1)
-    # temp1 = evaluation(svar0, svar1, garbledGate3)
-    ##temp2 = evaluation(cL1, cR1, garbledGate3)
+    # inputKeys[21] = evaluation(inputKeys[19], inputKeys[20], gates[9])  # AND
+    # return evaluation(inputKeys[18], inputKeys[21], gates[10])  # AND
 
-    # print("Result")
-    # print(temp1)
-    ##print(temp2)
-    # print(svar)
+
+# Alice class to represent Alice's part of communication
+class Alice:
+    def __init__(self, bt):
+        self.bt = bt
+        self.pkArray = []
+        self.p = None
+        self.key = None
+        self.q = None
+        self.g = None
+        self.h = None
+
+    # ElGamal key generation as done in the the ElGamal.py file
+    def keyGen(self):
+        # In practice this would be a large and safe prime, however inorder to quickly test that the algorithm works.
+        # This has a chance of failure since the order q chosen might not be prime
+        self.q = secrets.SystemRandom.randint(cr, pow(10, 20), pow(10, 50))
+        self.g = secrets.SystemRandom.randint(cr, 2, self.q)
+        self.key = elgamal.gen_key(self.q)
+        self.h = elgamal.power(self.g, self.key, self.q)
+        return self.g, self.h
+
+    # Oblivious keygen algorithm
+    # Picks h as a random number r between 1 and 2^2n and then r^2 mod q
+    def oGen(self):
+        g = secrets.SystemRandom.randint(cr, 2, self.q)
+        tal = pow(10, 50) + 1
+        bitlength = tal.bit_length()
+        r = secrets.SystemRandom.randint(cr, 1, pow(2, 2 * bitlength))
+        h = pow(r, 2) % self.q
+        return [g, h]
+
+    # Generate the array of encryption keys where one key corresponds to an actual encryption key pair
+    def createPKArray(self):
+        self.keyGen()
+        for i in range(0, 8):
+            self.pkArray.append(self.oGen())
+        self.pkArray[self.bt] = [self.g, self.h]
+        return self.pkArray, self.q
+
+    # receive the array of encrypted ciphertexts and decrypt the one that corresponds to alices bloodtype
+    def receiveCipherArray(self, cArray):
+        ct, p = cArray[self.bt]
+        resBits = elgamal.decrypt(ct, p, self.key, self.q)
+        #print("ALICE")
+        #print(resBits)
+        resa = resBits[:128]
+        resb = resBits[128:256]
+        resr = resBits[256:384]
+        #print(resa, resb, resr)
+        return resa, resb, resr
+
+    def receiveGarbleYandDecrypt(self, gg, x, y, d):
+        inputKeys = self.constructInput(x, y)
+
+        res = evaluateGC(gg, inputKeys)
+
+        return self.decrypt(d, res)
+
+    def constructInput(self, x, encryptedy):
+        y = self.receiveEncryptedY(encryptedy)
+        input = [x[0], x[1], x[2], y[0], y[1], y[2], y[3], y[4], y[5], y[6], y[7], y[8]]
+
+        print("y3", y[3])
+        inputKeys = [0] * 23
+
+        for i in range(12):
+            inputKeys[i] = input[i]
+
+        return inputKeys
+
+    def receiveEncryptedY(self, y):
+        decryptedy = []
+        for i in range(9):
+            decryptedy.append(y[i*128:(i*128)+128])
+        return decryptedy
+
+    def decrypt(self, d, res):
+        if res == d[0]:
+            return 0
+        elif res == d[1]:
+            return 1
+        else:
+            return None
+
+
+# Bob class to represent Bob's part of communication
+class Bob:
+    def __init__(self, bt):
+        self.bt = bt
+        self.wireKeys = generateGarbleKeys()
+
+    # Receive the array of encryption keys, bob then selectes the slicing of the truth table corresponding to his bloodtype.
+    # Then encrypt the slicing using the keys given by alice.
+    def receiveArray(self, pkArray, q):
+        resArray = []
+        for i in range(0, 8):
+            a = handin1.check_nth_bit(i, 2)
+            b = handin1.check_nth_bit(i, 1)
+            r = handin1.check_nth_bit(i, 0)
+            m = self.ggEncryptAlice(a, b, r)
+            resArray.append(elgamal.encryption(str(m), q, pkArray[i][1], pkArray[i][0]))
+
+        return resArray
+
+    def ggEncryptAlice(self, a, b, r):
+        bita = format(self.wireKeys[0][a], '0128b')
+        bitb = format(self.wireKeys[1][b], '0128b')
+        bitr = format(self.wireKeys[2][r], '0128b')
+        return str(bita) + str(bitb) + str(bitr)
+
+    def ggEncryptBob(self):
+        a = handin1.check_nth_bit(self.bt, 2)
+        b = handin1.check_nth_bit(self.bt, 1)
+        r = handin1.check_nth_bit(self.bt, 0)
+        bita = format(self.wireKeys[3][a], '0128b')
+        bitb = format(self.wireKeys[4][b], '0128b')
+        bitr = format(self.wireKeys[5][r], '0128b')
+
+        bit1 = format(self.wireKeys[6][1], '0128b')
+        bit2 = format(self.wireKeys[7][1], '0128b')
+        bit3 = format(self.wireKeys[8][1], '0128b')
+        bit4 = format(self.wireKeys[9][1], '0128b')
+        bit5 = format(self.wireKeys[10][1], '0128b')
+        bit6 = format(self.wireKeys[11][1], '0128b')
+        print("bob bit1", bit1)
+        print("in6", format(self.wireKeys[6][1], '0128b'))
+        print("in0", format(self.wireKeys[0][0], '0128b'))
+        return str(bita) + str(bitb) + str(bitr) + str(bit1) + str(bit2) + str(bit3) + str(bit4) + str(bit5) + str(bit6)
+
+    def garbleMyCircuit(self):
+        wireKeys = self.wireKeys
+        gates = []
+
+        gates.append(garbleMyGate("XOR", left=wireKeys[6], right=wireKeys[0], output=wireKeys[12]))
+        gates.append(garbleMyGate("XOR", left=wireKeys[7], right=wireKeys[1], output=wireKeys[13]))
+        gates.append(garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[2], output=wireKeys[14]))
+
+        gates.append(garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15]))
+        gates.append(garbleMyGate("AND", left=wireKeys[13], right=wireKeys[4], output=wireKeys[16]))
+        gates.append(garbleMyGate("AND", left=wireKeys[14], right=wireKeys[5], output=wireKeys[17]))
+
+        gates.append(garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[15], output=wireKeys[18]))
+        gates.append(garbleMyGate("XOR", left=wireKeys[10], right=wireKeys[16], output=wireKeys[19]))
+        gates.append(garbleMyGate("XOR", left=wireKeys[11], right=wireKeys[17], output=wireKeys[20]))
+
+        gates.append(garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21]))
+        gates.append(garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22]))
+
+        #gates.append(garbleMyGate("XOR", left=wireKeys[1], right=wireKeys[2], output=wireKeys[12]))
+        #gates.append(garbleMyGate("XOR", left=wireKeys[5], right=wireKeys[6], output=wireKeys[13]))
+        #gates.append(garbleMyGate("XOR", left=wireKeys[9], right=wireKeys[10], output=wireKeys[14]))
+
+        #gates.append(garbleMyGate("AND", left=wireKeys[12], right=wireKeys[3], output=wireKeys[15]))
+        #gates.append(garbleMyGate("AND", left=wireKeys[13], right=wireKeys[7], output=wireKeys[16]))
+        #gates.append(garbleMyGate("AND", left=wireKeys[14], right=wireKeys[11], output=wireKeys[17]))
+
+        #gates.append(garbleMyGate("XOR", left=wireKeys[0], right=wireKeys[15], output=wireKeys[18]))
+        #gates.append(garbleMyGate("XOR", left=wireKeys[4], right=wireKeys[16], output=wireKeys[19]))
+        #gates.append(garbleMyGate("XOR", left=wireKeys[8], right=wireKeys[17], output=wireKeys[20]))
+
+        #gates.append(garbleMyGate("AND", left=wireKeys[19], right=wireKeys[20], output=wireKeys[21]))
+        #gates.append(garbleMyGate("AND", left=wireKeys[18], right=wireKeys[21], output=wireKeys[22]))
+
+        return gates
+
+        # print(inputKeys)
+
+        # print(evaluation(inputKeys[1], inputKeys[2], gates[0]))
+        # evaluateGC(gates, inputKeys)
+
+        # if inputKeys[22] == wireKeys[22][1]:
+        #    return 1
+        # elif inputKeys[22] == wireKeys[22][0]:
+        #    return 0
+        # else:
+        #    return "shit"
+
+    def decryptionTable(self):
+        return self.wireKeys[22][0], self.wireKeys[22][1]
+
+
+# OT protocol for blood type compatability
+#def ot(aliceBt):
+#    alice = Alice(aliceBt)
+#    bob = Bob()
+#    pkArray, q = alice.createPKArray()
+#    resArray = bob.receiveArray(pkArray, q)
+#    resa, resb, resr = alice.receiveCipherArray(resArray)
+#    return resa, resb, resr
 
 
 # Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
     otResArray = [
-    [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
-    [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
-    [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
-    [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
-    [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
-    [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
-    [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
-    [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
-]
+        [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
+        [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
+        [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
+        [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
+        [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
+        [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
+        [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
+        [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
+    ]
     for i in range(8):
         for j in range(8):
-            gcRes = garbleMyCircuit(i, j)
+            gcRes = protocol(i, j)
             otResArray[i][j] = gcRes
             if (handin1.bloodCompLookup(i, j) != gcRes):
                 print("Blood compatability mismatch with lookup table")
@@ -202,8 +306,41 @@ def testAllCombinations():
     return print("All combinations tested")
 
 
+def protocol(aliceBt, bobBt):
+    alice = Alice(aliceBt)
+    bob = Bob(bobBt)
+
+    # OT protocol
+    pkArray, q = alice.createPKArray()
+    resArray = bob.receiveArray(pkArray, q)
+
+    # Result from OT protocol; encrypted Alice BT
+    resa, resb, resr = alice.receiveCipherArray(resArray)
+
+    gg = bob.garbleMyCircuit()
+    encrytedy = bob.ggEncryptBob()
+    d = bob.decryptionTable()
+
+    res = alice.receiveGarbleYandDecrypt(gg, (resa, resb, resr), encrytedy, d)
+
+    return res
+
+
 def main():
-    testAllCombinations()
+    protocol(0, 0)
+    #testAllCombinations()
+
+    #gates = []
+    #wireKeys = generateGarbleKeys()
+    #gates.append(garbleMyGate("XOR", left=wireKeys[6], right=wireKeys[0], output=wireKeys[12]))
+    #res = evaluation(wireKeys[6][1], wireKeys[0][0], gates[0])
+    #print(res)
+
+    #y = format(42, '06b') #101010
+    #decryptedy = []
+    #for i in range(3):
+    #    decryptedy.append(y[i*2:(i*2 + 2)])
+    #print(decryptedy)
 
 
 if __name__ == "__main__":
