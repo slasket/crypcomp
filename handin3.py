@@ -20,25 +20,19 @@ class Dealer:
 
 # Alice class for the and subroutine
 class AliceAnd:
-    def __init__(self, ua, va, wa, x):
+    def __init__(self, alice, ua, va, wa, xa, ya):
+
+        self.alice = alice
         self.ua = ua
         self.va = va
         self.wa = wa
 
-        self.x = x
-        self.xa = secrets.randbits(1)
-        self.xb = self.x ^ self.xa
+        self.xa = xa
+        self.ya = ya
 
-        self.ya = None
         self.da = None
         self.d = None
         self.e = None
-
-    def sharexb(self):
-        return self.xb
-
-    def receiveya(self, ya):
-        self.ya = ya
 
     def calcd(self, db):
         self.da = self.xa ^ self.ua
@@ -57,25 +51,19 @@ class AliceAnd:
 
 # Bob class for the and subroutine
 class BobAnd:
-    def __init__(self, ub, vb, wb, y):
+    def __init__(self, bob, ub, vb, wb, xb, yb):
+
+        self.bob = bob
+
         self.ub = ub
         self.vb = vb
         self.wb = wb
 
-        self.y = y
-        self.ya = secrets.randbits(1)
-        self.yb = self.y ^ self.ya
-
-        self.xb = None
+        self.xb = xb
+        self.yb = yb
 
         self.d = None
         self.e = None
-
-    def shareya(self):
-        return self.ya
-
-    def receivexb(self, xb):
-        self.xb = xb
 
     def calcdb(self):
         return self.xb ^ self.ub
@@ -96,17 +84,15 @@ class BobAnd:
 
 
 # subroutine for and protocol. Takes dealer as input for new U,V,W.
-def andProtocol(x, y, dealer):
-    aliceAnd = AliceAnd(dealer.ua, dealer.va, dealer.wa, x)
-    bobAnd = BobAnd(dealer.ub, dealer.vb, dealer.wb, y)
-
-    aliceAnd.receiveya(bobAnd.shareya())
-    bobAnd.receivexb(aliceAnd.sharexb())
+def andProtocol(alice, bob, dealer, x, y):
+    aliceAnd = AliceAnd(alice, dealer.ua, dealer.va, dealer.wa)
+    bobAnd = BobAnd(bob, dealer.ub, dealer.vb, dealer.wb)
 
     bobAnd.received(aliceAnd.calcd(bobAnd.calcdb()))
     bobAnd.receivee(aliceAnd.calce(bobAnd.calceb()))
 
-    return aliceAnd.calcza() ^ bobAnd.calczb()
+    Alice.za1 = aliceAnd.calcza()
+    Bob.zb1 = bobAnd.calczb()
 
 
 # Alice class to represent Alice's part of communication
@@ -116,6 +102,12 @@ class Alice:
         self.btb = btb
         self.btr = btr
 
+        self.za1 = None
+        self.za2 = None
+        self.za3 = None
+        self.za4 = None
+        self.za5 = None
+
 
 # Bob class to represent Bob's part of communication
 class Bob:
@@ -123,6 +115,12 @@ class Bob:
         self.bta = bta
         self.btb = btb
         self.btr = btr
+
+        self.zb1 = None
+        self.zb2 = None
+        self.zb3 = None
+        self.zb4 = None
+        self.zb5 = None
 
 # Function for simulating XOR with a constant
 def xorCProtocol(x, c):
@@ -147,7 +145,8 @@ def bedozaProtocol(aliceBt, bobBt):
     alice = Alice(aa, ab, ar)
     bob = Bob(ba, bb, br)
 
-    res1 = xorCProtocol(andProtocol(xorCProtocol(alice.bta, 1), bob.bta, dealer1), 1)
+
+    res1 = xorCProtocol(andProtocol(alice, bob, dealer1, xorCProtocol(alice.bta, 1), bob.bta), 1)
     res2 = xorCProtocol(andProtocol(xorCProtocol(alice.btb, 1), bob.btb, dealer2), 1)
     res3 = xorCProtocol(andProtocol(xorCProtocol(alice.btr, 1), bob.btr, dealer3), 1)
     res4 = andProtocol(res1, res2, dealer4)
