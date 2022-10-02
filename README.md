@@ -5,7 +5,7 @@ Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 To run the code for handin5, run the main method in the handin5.py file.
 This simulates the garbled circuits protocol, first Bob creates masking values for each wire, then he garbles every gate.
 Alices input is masked using the OT created in handin 4, this is mostly copied from that handin. In this implementation, the hardcoded ones that we XOR with are seen as additional input from bob side, as to not give away information about the circuit to Alice.
-Alice then runs the garbled circuit on her and Bobs masked input. and then decrypts the result.
+Alice then runs the garbled circuit on her and Bobs masked input. Then she decrypts the result.
 
 ### Handin 4:
 To run the code for handin4, run the main method in the handin4.py file.
