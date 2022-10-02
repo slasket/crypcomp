@@ -21,35 +21,58 @@ def generateGarbleKeys(circuitSize=23):
         wireKeys[i] = randomKey1, randomKey2
     return wireKeys
 
-def byte_xor(ba1, ba2):
-    return bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
+def evaluation(keyLeft, keyRight, garbledGate):
+    c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
+    for i, cipher in enumerate(garbledGate):
+        keyCandidate = cipher ^ c1
+        print(bin(keyCandidate))
+        if (bin(keyCandidate)[-128:]) == 0:
+            return bin(keyCandidate)[127:]
 
 def garbleMyGate(gate, left, right, output):
+    L0, L1 = left
+    R0, R1 = right
+    K0, K1 = output
+    K0_with_redundancy = int(str(bin(K0)) + str("0" * 128))
+    K1_with_redundancy = int(str(bin(K1)) + str("0" * 128))
+    print(K0_with_redundancy)
     if gate == "AND":
         #[0, 0, 0]
         #[1, 0, 0]
         #[0, 1, 0]
         #[1, 1, 1]
-        L0, L1 = left
-        R0, R1 = right
-        K0, K1 = output
-        xd = bytes(str(L0) + str(R0), 'utf-8')
-        c1 = hash.sha256(xd).digest() ^ bytes(K0)
-        #c2 = byte_xor(hash.sha256(L1 + R0).digest(), K0)
-        #c3 = byte_xor(hash.sha256(L0 + R1).digest(), K0)
-        #c4 = byte_xor(hash.sha256(L1 + R1).digest(), K1)
-        #print(c1)
+        c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+        c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+        c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+        c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+        ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
+        return ciphertexts
     elif gate == "XOR":
-        pass
+        #[0, 0, 0]
+        #[1, 0, 1]
+        #[0, 1, 1]
+        #[1, 1, 0]
+        c1 = int(hash.sha256(bytes(str(L0) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+        c2 = int(hash.sha256(bytes(str(L1) + str(R0), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+        c3 = int(hash.sha256(bytes(str(L0) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K1_with_redundancy
+        c4 = int(hash.sha256(bytes(str(L1) + str(R1), 'utf-8')).hexdigest(), base=16) ^ K0_with_redundancy
+        ciphertexts = np.random.permutation(np.array([c1, c2, c3, c4]))
+        return ciphertexts
+
 
 def garbleMyCircuit():
     wireKeys = generateGarbleKeys()
 
-    inputWires = 12
+    inputWires = 2
     # d = (Z0, Z1)
     d = wireKeys[len(wireKeys)-1]
-    garbleMyGate("AND", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
-
+    garbledGate = garbleMyGate("AND", left=wireKeys[0], right=wireKeys[1], output=wireKeys[2])
+    L0, L1 = wireKeys[0]
+    R0, R1 = wireKeys[1]
+    K0, K1 = wireKeys[2]
+    temp = evaluation(L1, R1, garbledGate)
+    print(temp)
+    print(K1)
 
 
 def main():
