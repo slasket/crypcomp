@@ -1,6 +1,12 @@
 # Cryptographic Computing
 Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 
+### handin 5:
+To run the code for handin5, run the main method in the handin5.py file.
+This simulates the garbled circuits protocol, first Bob creates masking values for each wire, then he garbles every gate.
+Alices input is masked using the OT created in handin 4, this is mostly copied from that handin. In this implementation, the hardcoded ones that we XOR with are seen as additional input from bob side, as to not give away information about the circuit to Alice.
+Alice then runs the garbled circuit on her and Bobs masked input. and then decrypts the result.
+
 ### Handin 4:
 To run the code for handin4, run the main method in the handin4.py file.
 This simulates the 1 out of 8 oblivious transfer protocol for the blood compatability function using El Gamal as the PKE scheme. To summarize, Alice generates a keypair for El Gamal as well as 7 other using OGen which she sends to Bob. Bob then encrypts the 8 messages using the 8 different keys, which he sends back to Alice. Since Alice knows her choice bit b, she simply decrypts the corresponding message and reads the result. The test run compares the result of all possible bloodtype combinations of donor and recipient with the values given by a truthtable structure containing the same information.
