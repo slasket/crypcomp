@@ -22,7 +22,7 @@ def evaluation(keyLeft, keyRight, garbledGate):
     for i, cipher in enumerate(garbledGate):
         keyCandidate = cipher ^ c1
         bitKey = format(keyCandidate, '0256b')
-        print("bitkey", bitKey)
+        #print("bitkey", bitKey)
         if (bitKey[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
             return int(bitKey[:128], 2)
 
@@ -59,9 +59,6 @@ def garbleMyGate(gate, left, right, output):
 
 def evaluateGC(gates, inputKeys):
     inputKeys[12] = evaluation(inputKeys[6], inputKeys[0], gates[0])  # XOR
-    print(inputKeys[6])
-    print(inputKeys[0])
-    print("12", evaluation(inputKeys[6], inputKeys[0], gates[0]))
     inputKeys[13] = evaluation(inputKeys[7], inputKeys[1], gates[1])  # XOR
     inputKeys[14] = evaluation(inputKeys[8], inputKeys[2], gates[2])  # XOR
 
@@ -154,11 +151,12 @@ class Alice:
         y = self.receiveEncryptedY(encryptedy)
         input = [x[0], x[1], x[2], y[0], y[1], y[2], y[3], y[4], y[5], y[6], y[7], y[8]]
 
-        print("y3", y[3])
+        #print("x0", x[0])
+        #print("y3", y[3])
         inputKeys = [0] * 23
 
         for i in range(12):
-            inputKeys[i] = input[i]
+            inputKeys[i] = int(input[i],2)
 
         return inputKeys
 
@@ -216,9 +214,9 @@ class Bob:
         bit4 = format(self.wireKeys[9][1], '0128b')
         bit5 = format(self.wireKeys[10][1], '0128b')
         bit6 = format(self.wireKeys[11][1], '0128b')
-        print("bob bit1", bit1)
-        print("in6", format(self.wireKeys[6][1], '0128b'))
-        print("in0", format(self.wireKeys[0][0], '0128b'))
+        #print("bob bit1", bit1)
+        #print("in6", format(self.wireKeys[6][1], '0128b'))
+        #print("in0", format(self.wireKeys[0][0], '0128b'))
         return str(bita) + str(bitb) + str(bitr) + str(bit1) + str(bit2) + str(bit3) + str(bit4) + str(bit5) + str(bit6)
 
     def garbleMyCircuit(self):
@@ -321,14 +319,17 @@ def protocol(aliceBt, bobBt):
     encrytedy = bob.ggEncryptBob()
     d = bob.decryptionTable()
 
+    #print("bob6", bob.wireKeys[6][1])
+    #print("bob0", bob.wireKeys[0][0])
+
     res = alice.receiveGarbleYandDecrypt(gg, (resa, resb, resr), encrytedy, d)
 
     return res
 
 
 def main():
-    protocol(0, 0)
-    #testAllCombinations()
+    #protocol(0, 0)
+    testAllCombinations()
 
     #gates = []
     #wireKeys = generateGarbleKeys()
