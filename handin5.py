@@ -23,19 +23,21 @@ def generateGarbleKeys(circuitSize=23):
 
 def evaluation(keyLeft, keyRight, garbledGate):
     c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
+    print("Eval")
     for i, cipher in enumerate(garbledGate):
         keyCandidate = cipher ^ c1
         print(bin(keyCandidate))
-        if (bin(keyCandidate)[-128:]) == 0:
-            return bin(keyCandidate)[127:]
+        if (bin(keyCandidate)[-128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+            return bin(keyCandidate)[:130]
 
 def garbleMyGate(gate, left, right, output):
     L0, L1 = left
     R0, R1 = right
     K0, K1 = output
-    K0_with_redundancy = int(str(bin(K0)) + str("0" * 128))
-    K1_with_redundancy = int(str(bin(K1)) + str("0" * 128))
-    print(K0_with_redundancy)
+    K0_with_redundancy = K0 << 128 #int.from_bytes(bytearray(K0.to_bytes(128, "big")) + bytearray(128), "big")
+    K1_with_redundancy = K1 << 128 #int.from_bytes(bytearray(K1.to_bytes(128, "big")) + bytearray(128), "big")
+    print("gg")
+    print(K1_with_redundancy)
     if gate == "AND":
         #[0, 0, 0]
         #[1, 0, 0]
@@ -71,8 +73,9 @@ def garbleMyCircuit():
     R0, R1 = wireKeys[1]
     K0, K1 = wireKeys[2]
     temp = evaluation(L1, R1, garbledGate)
+    print("Result")
     print(temp)
-    print(K1)
+    print(bin(K1))
 
 
 def main():
