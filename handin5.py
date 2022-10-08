@@ -54,6 +54,7 @@ class Alice:
         resr = resBits[256:384]
         return resa, resb, resr
 
+    # Receive the garbled Y and the means to decrypt the output of the function and then do it 4Head
     def receiveGarbleYandDecrypt(self, gg, x, y, d):
         inputKeys = self.constructInput(x, y)
 
@@ -61,22 +62,27 @@ class Alice:
 
         return self.decrypt(d, res)
 
+    # Constructs the input to the garbled circuit
     def constructInput(self, x, encryptedy):
+
+
         y = self.receiveEncryptedY(encryptedy)
         input = [x[0], x[1], x[2], y[0], y[1], y[2], y[3], y[4], y[5], y[6], y[7], y[8]]
         inputKeys = [0] * 23
 
         for i in range(12):
-            inputKeys[i] = int(input[i],2)
+            inputKeys[i] = int(input[i], 2)
 
         return inputKeys
 
+    # The y received is a bitstring of 128bit concatenated keys so these are simply split accordingly
     def receiveEncryptedY(self, y):
         decryptedy = []
         for i in range(9):
             decryptedy.append(y[i*128:(i*128)+128])
         return decryptedy
 
+    # Decrypts according to the d that Bob sent to Alice
     def decrypt(self, d, res):
         if res == d[0]:
             return 0
@@ -85,16 +91,21 @@ class Alice:
         else:
             return None
 
+    # Given a left key and a right key from previous wires, the function evaluates this and checks if any of the
+    # candidate keys have 128 redundant zeroes at the end
     def evaluation(self, keyLeft, keyRight, garbledGate):
         c1 = int(hash.sha256(bytes(str(keyLeft) + str(keyRight), 'utf-8')).hexdigest(), base=16)
         for i, cipher in enumerate(garbledGate):
+            # Candidate that may or may not have k appended zeroes
             keyCandidate = cipher ^ c1
             bitKey = format(keyCandidate, '0256b')
-            # print("bitkey", bitKey)
-            if (bitKey[
-                -128:]) == "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000":
+
+            # Check if the 128 least significant bits are all zeroes (the redundancy)
+            if (bitKey[-128:]) == "0" * 128:
                 return int(bitKey[:128], 2)
 
+    # This function computes the entirety of the garbled circuit from her constructed input and the circuit information
+    # both of which builds upon the information sent by Bob
     def evaluateGC(self, gates, inputKeys):
         inputKeys[12] = self.evaluation(inputKeys[6], inputKeys[0], gates[0])  # XOR
         inputKeys[13] = self.evaluation(inputKeys[7], inputKeys[1], gates[1])  # XOR
@@ -131,12 +142,15 @@ class Bob:
 
         return resArray
 
+    # Encrypts a possibility of Alice's blood type given the input bits and returns them as a concatenated bitstring
     def ggEncryptAlice(self, a, b, r):
         bita = format(self.wireKeys[0][a], '0128b')
         bitb = format(self.wireKeys[1][b], '0128b')
         bitr = format(self.wireKeys[2][r], '0128b')
         return str(bita) + str(bitb) + str(bitr)
 
+    # Encrypts Bob's blood type as well as all the ones needed for the XOR with 1 gates in the garbled circuit as a
+    # concatenated bitstring
     def ggEncryptBob(self):
         a = handin1.check_nth_bit(self.bt, 2)
         b = handin1.check_nth_bit(self.bt, 1)
@@ -153,6 +167,7 @@ class Bob:
         bit6 = format(self.wireKeys[11][1], '0128b')
         return str(bita) + str(bitb) + str(bitr) + str(bit1) + str(bit2) + str(bit3) + str(bit4) + str(bit5) + str(bit6)
 
+    # Garbles the entire circuit from the generated wirekeys
     def garbleMyCircuit(self):
         wireKeys = self.wireKeys
         gates = []
@@ -174,9 +189,11 @@ class Bob:
 
         return gates
 
+    # Computes the d send to Alice that allows for decryption of the output of the garbled circuit
     def decryptionTable(self):
         return self.wireKeys[22][0], self.wireKeys[22][1]
 
+    # Simply generates two 128 bit keys for each wire in the circuit
     def generateGarbleKeys(self, circuitSize=23):
         wireKeys = np.zeros(circuitSize, dtype=object)
 
@@ -186,6 +203,8 @@ class Bob:
             wireKeys[i] = randomKey1, randomKey2
         return wireKeys
 
+    # Given a gate specification and the 6 keys needed for garbling, the 4 possible ciphertexts corresponding to the
+    # possible truth table entries are generated and permuted
     def garbleMyGate(self, gate, left, right, output):
         L0, L1 = left
         R0, R1 = right
@@ -217,27 +236,16 @@ class Bob:
 
 # Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
-    otResArray = [
-        [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
-        [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
-        [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
-        [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
-        [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
-        [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
-        [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
-        [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
-    ]
     for i in range(8):
         for j in range(8):
             gcRes = protocol(i, j)
-            otResArray[i][j] = gcRes
             if (handin1.bloodCompLookup(i, j) != gcRes):
                 print("Blood compatability mismatch with lookup table")
                 print("input:", i, j)
-                print("table:", handin1.bloodCompLookup(i, j), "OT:", gcRes)
+                print("table:", handin1.bloodCompLookup(i, j), "Garbled Circuit:", gcRes)
     return print("All combinations tested")
 
-
+# Runs Yao's protocol implemented to compute the blood type compatibility function
 def protocol(aliceBt, bobBt):
     alice = Alice(aliceBt)
     bob = Bob(bobBt)
