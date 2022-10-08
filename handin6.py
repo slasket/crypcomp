@@ -5,6 +5,7 @@ import handin1
 cr = secrets.SystemRandom()
 
 # Key generation. Generates public and secret key
+#shit
 def keyGen(n, psec=500, qsec=100000, rsec=30):
     p = secrets.SystemRandom.getrandbits(cr, psec)
     if p % 2 == 0:
