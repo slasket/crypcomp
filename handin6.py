@@ -4,8 +4,8 @@ import handin1
 
 cr = secrets.SystemRandom()
 
-
-def keyGen(n, psec=1256, qsec=100000, rsec=30):
+# Key generation. Generates public and secret key
+def keyGen(n, psec=500, qsec=100000, rsec=30):
     p = secrets.SystemRandom.getrandbits(cr, psec)
     if p % 2 == 0:
         p = p + 1
@@ -20,7 +20,7 @@ def keyGen(n, psec=1256, qsec=100000, rsec=30):
         yi.append(p * qi[i] + 2 * ri[i])
     return p, qi, ri, yi
 
-
+# Encryption function that samples a random amount of yis from the public key for encryption
 def encrypt(m, yi):
     s = secrets.SystemRandom.randint(cr, 1, 100)
     random_yi = random.sample(yi, s)
@@ -28,12 +28,12 @@ def encrypt(m, yi):
         m = m + y
     return m
 
-
+# Decryption function that samples mods with the secret key p and 2
 def decrypt(c, p):
     m = (c % p) % 2
     return m
 
-
+# Alice class representing one party of the communication
 class Alice:
     def __init__(self, bt):
         self.bt = bt
@@ -43,6 +43,7 @@ class Alice:
         self.ri = ri
         self.yi = yi
 
+    # Alice encrypts her blood type and returns it
     def choose(self):
         a = handin1.check_nth_bit(self.bt, 2)
         b = handin1.check_nth_bit(self.bt, 1)
@@ -52,19 +53,22 @@ class Alice:
 
         return m1
 
+    # shares public key
     def share_pk(self):
         return self.yi
 
+    # decrypts the received message
     def retrieve(self, m2):
         res = decrypt(m2, self.p)
 
         return res
 
-
+# Bob class representing one party of the communication
 class Bob:
     def __init__(self, bt):
         self.bt = bt
 
+    # Receives an encrypted message, encrypts Bobs message and calculates the blood type compatability function
     def transfer(self, m1, yi):
         a = handin1.check_nth_bit(self.bt, 2)
         b = handin1.check_nth_bit(self.bt, 1)
@@ -84,7 +88,7 @@ class Bob:
 
         return res_encrypted
 
-
+# Function that simulates the d-HE scheme between Alice and Bob
 def protocol(i, j):
     alice = Alice(i)
     bob = Bob(j)
@@ -97,26 +101,13 @@ def protocol(i, j):
 
 # Function to test all blood type combinations through the protocol compared with the original unshifted truth table from handin 1.
 def testAllCombinations():
-    otResArray = [
-        [1, 0, 0, 0, 0, 0, 0, 0],  # o- /0
-        [1, 1, 0, 0, 0, 0, 0, 0],  # o+ /1
-        [1, 0, 1, 0, 0, 0, 0, 0],  # b- /2
-        [1, 1, 1, 1, 0, 0, 0, 0],  # b+ /3
-        [1, 0, 0, 0, 1, 0, 0, 0],  # a- /4
-        [1, 1, 0, 0, 1, 1, 0, 0],  # a+ /5
-        [1, 0, 1, 0, 1, 0, 1, 0],  # ab-/6
-        [1, 1, 1, 1, 1, 1, 1, 1],  # ab+/7
-    ]
     for i in range(8):
         for j in range(8):
             gcRes = protocol(i, j)
-            otResArray[i][j] = gcRes
             if (handin1.bloodCompLookup(i, j) != gcRes):
                 print("Blood compatability mismatch with lookup table")
                 print("input:", i, j)
                 print("table:", handin1.bloodCompLookup(i, j), "OT:", gcRes)
-        # for i in range(8):
-        # print(otResArray[i])
     return print("All combinations tested")
 
 
