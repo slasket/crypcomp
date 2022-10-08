@@ -3,10 +3,10 @@ Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 
 ### handin 6:
 The chosen security parameters are chosen as follows:
-P = 500 bits
-q_i = 10^5 bits
-r_i = 30 bits
-n = 100
+- P = 500 bits
+- q_i = 10^5 bits
+- r_i = 30 bits
+- n = 100
 
 Since the bits are beeing encrypted its important that one cant guess the bit beeing encrypted by computing all possible subsets of y's. Therefor n is chosen to be sufficiently large that guessing the specific subset used for encryption is cumbersome. For this scheme 2^100 was deemed secure enough. 
 To ensure that the scheme is homomorphic enough, one needs to ensure that the sum of all r's used in the scheme does not reach a size beyond p.
