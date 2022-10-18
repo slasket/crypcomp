@@ -22,8 +22,8 @@ def keyGen(n, psec=500, qsec=100000, rsec=30):
 
 # Encryption function that samples a random amount of yis from the public key for encryption
 def encrypt(m, yi):
-    s = secrets.SystemRandom.randint(cr, 1, 100)
-    random_yi = random.sample(yi, s)
+    # Changed sample to fixed size of 80 which is a large subset of the public key
+    random_yi = random.sample(yi, 80)
     for i, y in enumerate(random_yi):
         m = m + y
     return m
