@@ -1,6 +1,22 @@
 # Cryptographic Computing
 Svend Christensen AU604608, Simon Sørensen AU599666, Aske Bay Glenting AU586304
 
+### handin 6:
+The chosen security parameters are chosen as follows:
+- P = 500 bits
+- q_i = 10^5 bits
+- r_i = 30 bits
+- n = 100
+
+Since this scheme encrypts bits, its important that one cant guess the bit being encrypted by computing all possible subsets of y's.
+Therefor n is chosen to be sufficiently large, that guessing the specific subset used for encryption is cumbersome. For this scheme 2^100 was deemed secure enough. 
+To ensure that the scheme is homomorphic enough, one needs to ensure that the sum of all r's used in the scheme does not reach a size beyond p.
+For the blood compatibility function 5 multiplications/ands are used, assuming the entire set of r's are used for encryption of every bit we assume that every encryption needs 50 bits for the sum of r's. In a multiplication the r's from one encryption is multiplied with the r's of another, this will need 2*50 bits be represent the result.
+this is done 3 times in layers, which would mean that the compounding effect of the result is of order of 400-bits. To ensure that the scheme is still homomorphic the p is chosen to be 500 bits.
+
+
+
+
 ### handin 5:
 To run the code for handin5, run the main method in the handin5.py file.
 This simulates the garbled circuits protocol, first Bob creates masking values for each wire, then he garbles every gate.
